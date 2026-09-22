@@ -27,6 +27,7 @@ import { IQuery } from "../../interfaces";
 import { RequestUser } from "../../middleware/checkAuth";
 import { DoctorWhereInput } from "../../../generated/prisma/models";
 import { addDays, startOfDay } from "date-fns";
+import { generateRandomPassword } from "../../utils/randomDoctorPassword";
 
 const applyAsDoctor = async (
   payload: IApplyAsDoctorPayload,
@@ -97,17 +98,17 @@ const applyAsDoctor = async (
 
   console.log({ additionalFilesUploadResults });
 
-  const randomDoctorPassword = Math.random().toString(36).slice(-8);
+  // const randomDoctorPassword = Math.random().toString(36).slice(-8);
 
-  const hashedPassword = await bcrypt.hash(
-    randomDoctorPassword,
-    Number(config.bcrypt_salt_rounds),
-  );
+  // const hashedPassword = await bcrypt.hash(
+  //   randomDoctorPassword,
+  //   Number(config.bcrypt_salt_rounds),
+  // );
 
   const doctorApplication = await prisma.user.create({
     data: {
       ...payload.user,
-      password: hashedPassword,
+      // password: hashedPassword,
       role: Role.DOCTOR,
       needPasswordChange: true,
       doctor: {
@@ -254,6 +255,19 @@ const approveDoctor = async (
       "Rejection Reason Is Required When Rejecting A Doctor Application",
     );
   }
+  const isApproved = verificationStatus === DoctorVerificationStatus.APPROVED;
+
+  const randomDoctorPassword = isApproved
+    ? generateRandomPassword()
+    : undefined;
+
+  if (config.node_env === "development" && randomDoctorPassword) {
+    console.log(`[dev] Random Password plain text: ${randomDoctorPassword}`);
+  }
+
+  const hashedPassword = randomDoctorPassword
+    ? await bcrypt.hash(randomDoctorPassword, Number(config.bcrypt_salt_rounds))
+    : undefined;
 
   const updatedDoctor = await prisma.doctor.update({
     where: { id: doctorId },
@@ -265,10 +279,13 @@ const approveDoctor = async (
           : null,
       reviewedBy: reviewer.userId,
       reviewedAt: new Date(),
+      ...(hashedPassword
+        ? { user: { update: { password: hashedPassword } } }
+        : {}),
     },
   });
 
-  const isApproved = verificationStatus === DoctorVerificationStatus.APPROVED;
+  // const isApproved = verificationStatus === DoctorVerificationStatus.APPROVED;
 
   const tempatePath = path.join(
     process.cwd(),
@@ -625,6 +642,7 @@ const getSingleDoctorPublicProfile = async (doctorId: string) => {
 
   return doctor;
 };
+
 export const DoctorServices = {
   applyAsDoctor,
   verifyDoctorEmail,

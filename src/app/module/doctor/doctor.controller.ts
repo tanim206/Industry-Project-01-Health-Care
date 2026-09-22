@@ -54,7 +54,7 @@ const approveDoctor = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: "Doctor Email Verified Successfully",
+    message: "Doctor Application Reviewed Successfully",
     data: result,
   });
 });

@@ -364,7 +364,7 @@ const googleLogin = async (payload: IGoogleLoginPayload) => {
     throw new Error("Google Email User Name Not Found");
   }
 
-  const ifPatientExistWithGoogleAuth = await prisma.user.findUnique({
+  const ifPatientExistWithGoogleAuth = await prisma.user.findFirst({
     where: {
       email: googleIdTokenPayload.email,
       role: Role.PATIENT,
@@ -375,7 +375,7 @@ const googleLogin = async (payload: IGoogleLoginPayload) => {
   let user = ifPatientExistWithGoogleAuth;
 
   if (!ifPatientExistWithGoogleAuth) {
-    const ifPatientExistWithCredentials = await prisma.user.findUnique({
+    const ifPatientExistWithCredentials = await prisma.user.findFirst({
       where: {
         email: googleIdTokenPayload.email,
         role: Role.PATIENT,
@@ -577,7 +577,7 @@ const resetPassword = async (payload: IResetPasswordPayload) => {
     throw new Error("User Has Account With Google");
   }
 
-  const key = `forgor-password-otp:${isUserExist.email}`;
+  const key = `forgot-password-otp:${isUserExist.email}`;
 
   const redisOtp = await redisClient.get(key);
 
