@@ -41,7 +41,7 @@ const applyAsDoctor = async (
   });
 
   if (isUserExists) {
-    throw new Error("User Already Exists With This Email");
+    throw new AppError(httpStatus.CONFLICT, "User Already Exists With This Email");
   }
 
   const resumeUploadResult = await new Promise<UploadApiResponse>(
@@ -466,8 +466,8 @@ const getAvailableDoctorByTodaysSchedule = async (query: IQuery) => {
           startDateTime: {
             gte: startOfToday,
             lt: startOfTomorrow,
-            gt: now,
           },
+          endDateTime: { gt: now },
         },
       },
     },
@@ -518,10 +518,10 @@ const getAvailableDoctorByTodaysSchedule = async (query: IQuery) => {
           startDateTime: {
             gte: startOfToday,
             lt: startOfTomorrow,
-            gt: now,
           },
+          endDateTime: { gt: now },
         },
-        orderBy: { [sortBy]: sortOrder },
+        orderBy: { startDateTime: "asc" },
         select: {
           id: true,
           startDateTime: true,

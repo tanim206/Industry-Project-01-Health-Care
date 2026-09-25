@@ -516,6 +516,7 @@ const getTodaysSchedules = async (query: IQuery) => {
         lt: startOfTomorrow,
         gt: now,
       },
+      endDateTime: { gt: now },
     },
     {
       availableSlots: { gt: 0 },
